@@ -13,34 +13,45 @@
     .lap-list li { font-size: 14px; margin: 4px 0; }
     .export-btn { margin-top: 20px; padding: 10px; font-size: 16px; background: #28a745; color: #fff; border: none; border-radius: 5px; }
     .start-all { background: #007bff; color: white; font-size: 18px; padding: 12px 20px; border: none; border-radius: 5px; margin-bottom: 20px; }
+    .layout-toggle { margin-bottom: 20px; padding: 10px; background: #ffc107; color: #000; border: none; border-radius: 5px; font-size: 16px; }
+    .team-container { display: flex; flex-direction: column; gap: 20px; }
+    .side-by-side { flex-direction: row; }
+    .team h2 input { width: 100%; font-size: 18px; padding: 5px; }
   </style>
 </head>
 <body>
   <h1>🏁 Emayarox 2025 Timer</h1>
+  <button class="layout-toggle" onclick="toggleLayout()">Toggle Layout</button>
   <button class="start-all" onclick="startBothTimers()">START BOTH TEAMS</button>
 
-  <div class="team" id="teamA">
-    <h2>Team A</h2>
-    <div class="buttons">
-      <button onclick="startTimer('A')">Start</button>
-      <button onclick="lap('A')">Lap</button>
-      <button onclick="stopTimer('A')">Stop</button>
-      <button onclick="resetTimer('A')">Reset</button>
+  <div class="team-container" id="teamContainer">
+    <div class="team" id="teamA">
+      <h2>
+        <input type="text" id="teamAName" value="Team A" onchange="changeTeamName('A')" />
+      </h2>
+      <div class="buttons">
+        <button onclick="startTimer('A')">Start</button>
+        <button onclick="lap('A')">Lap</button>
+        <button onclick="stopTimer('A')">Stop</button>
+        <button onclick="resetTimer('A')">Reset</button>
+      </div>
+      <p>Total Time: <span id="timeA">00:00:00.000</span></p>
+      <ul id="lapsA" class="lap-list"></ul>
     </div>
-    <p>Total Time: <span id="timeA">00:00:00.000</span></p>
-    <ul id="lapsA" class="lap-list"></ul>
-  </div>
 
-  <div class="team" id="teamB">
-    <h2>Team B</h2>
-    <div class="buttons">
-      <button onclick="startTimer('B')">Start</button>
-      <button onclick="lap('B')">Lap</button>
-      <button onclick="stopTimer('B')">Stop</button>
-      <button onclick="resetTimer('B')">Reset</button>
+    <div class="team" id="teamB">
+      <h2>
+        <input type="text" id="teamBName" value="Team B" onchange="changeTeamName('B')" />
+      </h2>
+      <div class="buttons">
+        <button onclick="startTimer('B')">Start</button>
+        <button onclick="lap('B')">Lap</button>
+        <button onclick="stopTimer('B')">Stop</button>
+        <button onclick="resetTimer('B')">Reset</button>
+      </div>
+      <p>Total Time: <span id="timeB">00:00:00.000</span></p>
+      <ul id="lapsB" class="lap-list"></ul>
     </div>
-    <p>Total Time: <span id="timeB">00:00:00.000</span></p>
-    <ul id="lapsB" class="lap-list"></ul>
   </div>
 
   <button class="export-btn" onclick="exportCSV()">Export CSV</button>
@@ -53,6 +64,7 @@
     let elapsed = { A: 0, B: 0 };
     let lapData = { A: [], B: [] };
     let lastLapTime = { A: 0, B: 0 };
+    let isSideBySide = false;
 
     function formatTime(ms) {
       let totalSec = Math.floor(ms / 1000);
@@ -124,7 +136,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'emayarox_lap_times.csv';
+      a.download = 'lap_times.csv';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -134,6 +146,17 @@
       const beep = document.getElementById('beep');
       beep.currentTime = 0;
       beep.play();
+    }
+
+    function toggleLayout() {
+      const container = document.getElementById('teamContainer');
+      isSideBySide = !isSideBySide;
+      container.className = isSideBySide ? 'team-container side-by-side' : 'team-container';
+    }
+
+    function changeTeamName(team) {
+      const input = document.getElementById(`team${team}Name`);
+      document.querySelector(`#team${team} h2`).textContent = input.value;
     }
   </script>
 </body>
