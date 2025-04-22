@@ -10,8 +10,9 @@
     .team { background: #fff; padding: 15px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
     .buttons button { margin: 5px; padding: 10px; font-size: 16px; }
     .buttons .start-btn { background: #28a745; color: white; border: none; border-radius: 5px; }
-    .buttons .lap-btn { background: #ffc107; color: black; border: none; border-radius: 5px; font-size: 16px; padding: 20px; }
+    .buttons .lap-btn { background: #ffc107; color: black; border: none; border-radius: 5px; }
     .buttons .stop-btn { background: #dc3545; color: white; border: none; border-radius: 5px; }
+    .buttons .reset-btn { background: #000; color: white; border: none; border-radius: 5px; }
     .lap-list { margin-top: 10px; }
     .lap-list li { font-size: 14px; margin: 4px 0; }
     .export-btn { margin-top: 20px; padding: 10px; font-size: 16px; background: #28a745; color: #fff; border: none; border-radius: 5px; }
@@ -20,10 +21,17 @@
     .team-container { display: flex; flex-direction: column; gap: 20px; }
     .side-by-side { flex-direction: row; }
     .team h2 input { width: 100%; font-size: 18px; padding: 5px; }
+    .total-time-container { margin-top: 20px; text-align: center; }
+    .total-time { font-size: 32px; font-weight: bold; color: #333; margin-bottom: 20px; }
   </style>
 </head>
 <body>
   <h1>🏁 Emayarox 2025 Timer</h1>
+  <div class="total-time-container">
+    <div class="total-time">
+      Unified Total Time: <span id="unifiedTotalTime">00:00:00.000</span>
+    </div>
+  </div>
   <button class="layout-toggle" onclick="toggleLayout()">Toggle Layout</button>
   <button class="start-all" onclick="startBothTimers()">START BOTH TEAMS</button>
 
@@ -36,9 +44,9 @@
         <button class="start-btn" onclick="startTimer('A')">Start</button>
         <button class="lap-btn" onclick="lap('A')">Lap</button>
         <button class="stop-btn" onclick="stopTimer('A')">Stop</button>
-        <button onclick="resetTimer('A')">Reset</button>
+        <button class="reset-btn" onclick="resetTimer('A')">Reset</button>
       </div>
-      <p>Total Time: <span id="timeA">00:00:00.000</span></p>
+      <p>Total Time: <span id="totalTimeA">00:00:00.000</span></p>
       <ul id="lapsA" class="lap-list"></ul>
     </div>
 
@@ -50,9 +58,9 @@
         <button class="start-btn" onclick="startTimer('B')">Start</button>
         <button class="lap-btn" onclick="lap('B')">Lap</button>
         <button class="stop-btn" onclick="stopTimer('B')">Stop</button>
-        <button onclick="resetTimer('B')">Reset</button>
+        <button class="reset-btn" onclick="resetTimer('B')">Reset</button>
       </div>
-      <p>Total Time: <span id="timeB">00:00:00.000</span></p>
+      <p>Total Time: <span id="totalTimeB">00:00:00.000</span></p>
       <ul id="lapsB" class="lap-list"></ul>
     </div>
   </div>
@@ -81,7 +89,12 @@
     function updateTime(team) {
       let now = Date.now();
       let time = elapsed[team] + (startTimes[team] ? now - startTimes[team] : 0);
-      document.getElementById(`time${team}`).textContent = formatTime(time);
+      const formattedTime = formatTime(time);
+      document.getElementById(`totalTime${team}`).textContent = formattedTime;
+
+      // Update unified total time
+      const unifiedTime = Math.max(elapsed.A + (startTimes.A ? now - startTimes.A : 0), elapsed.B + (startTimes.B ? now - startTimes.B : 0));
+      document.getElementById('unifiedTotalTime').textContent = formatTime(unifiedTime);
     }
 
     function startTimer(team) {
@@ -111,8 +124,11 @@
       elapsed[team] = 0;
       lapData[team] = [];
       lastLapTime[team] = 0;
-      document.getElementById(`time${team}`).textContent = '00:00:00.000';
+      document.getElementById(`totalTime${team}`).textContent = '00:00:00.000';
       document.getElementById(`laps${team}`).innerHTML = '';
+
+      // Reset unified total time
+      document.getElementById('unifiedTotalTime').textContent = '00:00:00.000';
     }
 
     function lap(team) {
