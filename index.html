@@ -15,24 +15,26 @@
     .buttons .reset-btn { background: #000; color: white; border: none; border-radius: 5px; }
     .lap-list { margin-top: 10px; }
     .lap-list li { font-size: 14px; margin: 4px 0; }
-    .export-btn { margin-top: 20px; padding: 10px; font-size: 16px; background: #28a745; color: #fff; border: none; border-radius: 5px; }
+    .export-btn, .layout-toggle { margin-top: 20px; padding: 10px; font-size: 16px; border: none; border-radius: 5px; }
+    .export-btn { background: #28a745; color: #fff; }
+    .layout-toggle { background: #ffc107; color: #000; }
     .start-all { background: #007bff; color: white; font-size: 18px; padding: 12px 20px; border: none; border-radius: 5px; margin-bottom: 20px; }
-    .layout-toggle { margin-bottom: 20px; padding: 10px; background: #ffc107; color: #000; border: none; border-radius: 5px; font-size: 16px; }
     .team-container { display: flex; flex-direction: column; gap: 20px; }
     .side-by-side { flex-direction: row; }
     .team h2 input { width: 100%; font-size: 18px; padding: 5px; }
     .total-time-container { margin-top: 20px; text-align: center; }
     .total-time { font-size: 32px; font-weight: bold; color: #333; margin-bottom: 20px; }
+    .team-timer { font-size: 24px; font-weight: bold; color: #444; }
+    .footer-buttons { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
   </style>
 </head>
 <body>
   <h1>🏁 Emayarox 2025 Timer</h1>
   <div class="total-time-container">
     <div class="total-time">
-      Unified Total Time: <span id="unifiedTotalTime">00:00:00.000</span>
+      Total Time: <span id="unifiedTotalTime">00:00:00.000</span>
     </div>
   </div>
-  <button class="layout-toggle" onclick="toggleLayout()">Toggle Layout</button>
   <button class="start-all" onclick="startBothTimers()">START BOTH TEAMS</button>
 
   <div class="team-container" id="teamContainer">
@@ -46,7 +48,7 @@
         <button class="stop-btn" onclick="stopTimer('A')">Stop</button>
         <button class="reset-btn" onclick="resetTimer('A')">Reset</button>
       </div>
-      <p>Total Time: <span id="totalTimeA">00:00:00.000</span></p>
+      <p class="team-timer">Total Time: <span id="totalTimeA">00:00:00.000</span></p>
       <ul id="lapsA" class="lap-list"></ul>
     </div>
 
@@ -60,12 +62,15 @@
         <button class="stop-btn" onclick="stopTimer('B')">Stop</button>
         <button class="reset-btn" onclick="resetTimer('B')">Reset</button>
       </div>
-      <p>Total Time: <span id="totalTimeB">00:00:00.000</span></p>
+      <p class="team-timer">Total Time: <span id="totalTimeB">00:00:00.000</span></p>
       <ul id="lapsB" class="lap-list"></ul>
     </div>
   </div>
 
-  <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+  <div class="footer-buttons">
+    <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+    <button class="layout-toggle" onclick="toggleLayout()">Toggle Layout</button>
+  </div>
 
   <audio id="beep" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 
@@ -111,12 +116,13 @@
     }
 
     function stopTimer(team) {
-      if (startTimes[team]) {
-        elapsed[team] += Date.now() - startTimes[team];
-        clearInterval(timers[team]);
-        startTimes[team] = null;
-        playBeep();
-      }
+      // Generate a lap before stopping the timer
+      lap(team);
+
+      elapsed[team] += Date.now() - startTimes[team];
+      clearInterval(timers[team]);
+      startTimes[team] = null;
+      playBeep();
     }
 
     function resetTimer(team) {
