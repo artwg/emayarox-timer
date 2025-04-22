@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hyrox Sim Timer</title>
+  <title>Emayarox 2025 Timer</title>
   <style>
     body { font-family: sans-serif; padding: 10px; background: #f4f4f4; }
     h2 { margin-top: 30px; }
@@ -12,10 +12,12 @@
     .lap-list { margin-top: 10px; }
     .lap-list li { font-size: 14px; margin: 4px 0; }
     .export-btn { margin-top: 20px; padding: 10px; font-size: 16px; background: #28a745; color: #fff; border: none; border-radius: 5px; }
+    .start-all { background: #007bff; color: white; font-size: 18px; padding: 12px 20px; border: none; border-radius: 5px; margin-bottom: 20px; }
   </style>
 </head>
 <body>
-  <h1>🏁 Hyrox Sim Timer</h1>
+  <h1>🏁 Emayarox 2025 Timer</h1>
+  <button class="start-all" onclick="startBothTimers()">START BOTH TEAMS</button>
 
   <div class="team" id="teamA">
     <h2>Team A</h2>
@@ -43,18 +45,22 @@
 
   <button class="export-btn" onclick="exportCSV()">Export CSV</button>
 
+  <audio id="beep" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+
   <script>
     let timers = { A: null, B: null };
     let startTimes = { A: null, B: null };
     let elapsed = { A: 0, B: 0 };
     let lapData = { A: [], B: [] };
+    let lastLapTime = { A: 0, B: 0 };
 
     function formatTime(ms) {
-      let h = Math.floor(ms / 3600000);
-      let m = Math.floor((ms % 3600000) / 60000);
-      let s = Math.floor((ms % 60000) / 1000);
-      let msPart = ms % 1000;
-      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(msPart).padStart(3, '0')}`;
+      let totalSec = Math.floor(ms / 1000);
+      let h = Math.floor(totalSec / 3600);
+      let m = Math.floor((totalSec % 3600) / 60);
+      let s = totalSec % 60;
+      let msRemain = ms % 1000;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(msRemain).padStart(3, '0')}`;
     }
 
     function updateTime(team) {
@@ -66,8 +72,14 @@
     function startTimer(team) {
       if (!startTimes[team]) {
         startTimes[team] = Date.now();
-        timers[team] = setInterval(() => updateTime(team), 100);
+        timers[team] = setInterval(() => updateTime(team), 50);
+        playBeep();
       }
+    }
+
+    function startBothTimers() {
+      startTimer('A');
+      startTimer('B');
     }
 
     function stopTimer(team) {
@@ -75,6 +87,7 @@
         elapsed[team] += Date.now() - startTimes[team];
         clearInterval(timers[team]);
         startTimes[team] = null;
+        playBeep();
       }
     }
 
@@ -82,6 +95,7 @@
       stopTimer(team);
       elapsed[team] = 0;
       lapData[team] = [];
+      lastLapTime[team] = 0;
       document.getElementById(`time${team}`).textContent = '00:00:00.000';
       document.getElementById(`laps${team}`).innerHTML = '';
     }
@@ -90,27 +104,36 @@
       let now = Date.now();
       let currentTime = elapsed[team] + (startTimes[team] ? now - startTimes[team] : 0);
       let label = `Lap ${lapData[team].length + 1}`;
-      lapData[team].push({ label, time: formatTime(currentTime) });
+      let lapDuration = currentTime - lastLapTime[team];
+      lastLapTime[team] = currentTime;
+      lapData[team].push({ label, time: formatTime(currentTime), duration: formatTime(lapDuration) });
       const li = document.createElement('li');
-      li.textContent = `${lapData[team].length}. ${label} - ${formatTime(currentTime)}`;
+      li.textContent = `${lapData[team].length}. ${label} - ${formatTime(currentTime)} (Duration: ${formatTime(lapDuration)})`;
       document.getElementById(`laps${team}`).appendChild(li);
+      playBeep();
     }
 
     function exportCSV() {
-      let csv = 'Team,Lap Number,Label,Time\n';
+      let csv = 'Team,Lap Number,Label,Time,Duration\n';
       ['A', 'B'].forEach(team => {
         lapData[team].forEach((lap, i) => {
-          csv += `Team ${team},${i + 1},${lap.label},${lap.time}\n`;
+          csv += `Team ${team},${i + 1},${lap.label},${lap.time},${lap.duration}\n`;
         });
       });
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'hyrox_lap_times.csv';
+      a.download = 'emayarox_lap_times.csv';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+    }
+
+    function playBeep() {
+      const beep = document.getElementById('beep');
+      beep.currentTime = 0;
+      beep.play();
     }
   </script>
 </body>
