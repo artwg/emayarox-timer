@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hyrox Sim Timer</title>
+  <style>
+    body { font-family: sans-serif; padding: 10px; background: #f4f4f4; }
+    h2 { margin-top: 30px; }
+    .team { background: #fff; padding: 15px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .buttons button { margin: 5px; padding: 10px; font-size: 16px; }
+    .lap-list { margin-top: 10px; }
+    .lap-list li { font-size: 14px; margin: 4px 0; }
+    .export-btn { margin-top: 20px; padding: 10px; font-size: 16px; background: #28a745; color: #fff; border: none; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>🏁 Hyrox Sim Timer</h1>
+
+  <div class="team" id="teamA">
+    <h2>Team A</h2>
+    <div class="buttons">
+      <button onclick="startTimer('A')">Start</button>
+      <button onclick="lap('A')">Lap</button>
+      <button onclick="stopTimer('A')">Stop</button>
+      <button onclick="resetTimer('A')">Reset</button>
+    </div>
+    <p>Total Time: <span id="timeA">00:00:00</span></p>
+    <ul id="lapsA" class="lap-list"></ul>
+  </div>
+
+  <div class="team" id="teamB">
+    <h2>Team B</h2>
+    <div class="buttons">
+      <button onclick="startTimer('B')">Start</button>
+      <button onclick="lap('B')">Lap</button>
+      <button onclick="stopTimer('B')">Stop</button>
+      <button onclick="resetTimer('B')">Reset</button>
+    </div>
+    <p>Total Time: <span id="timeB">00:00:00</span></p>
+    <ul id="lapsB" class="lap-list"></ul>
+  </div>
+
+  <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+
+  <script>
+    let timers = { A: null, B: null };
+    let startTimes = { A: null, B: null };
+    let elapsed = { A: 0, B: 0 };
+    let lapData = { A: [], B: [] };
+
+    function formatTime(ms) {
+      let sec = Math.floor(ms / 1000);
+      let h = Math.floor(sec / 3600);
+      let m = Math.floor((sec % 3600) / 60);
+      let s = sec % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function updateTime(team) {
+      let now = Date.now();
+      let time = elapsed[team] + (startTimes[team] ? now - startTimes[team] : 0);
+      document.getElementById(`time${team}`).textContent = formatTime(time);
+    }
+
+    function startTimer(team) {
+      if (!startTimes[team]) {
+        startTimes[team] = Date.now();
+        timers[team] = setInterval(() => updateTime(team), 200);
+      }
+    }
+
+    function stopTimer(team) {
+      if (startTimes[team]) {
+        elapsed[team] += Date.now() - startTimes[team];
+        clearInterval(timers[team]);
+        startTimes[team] = null;
+      }
+    }
+
+    function resetTimer(team) {
+      stopTimer(team);
+      elapsed[team] = 0;
+      lapData[team] = [];
+      document.getElementById(`time${team}`).textContent = '00:00:00';
+      document.getElementById(`laps${team}`).innerHTML = '';
+    }
+
+    function lap(team) {
+      let now = Date.now();
+      let currentTime = elapsed[team] + (startTimes[team] ? now - startTimes[team] : 0);
+      let label = prompt("Lap label (e.g. Run 1, Sled Push):", `Lap ${lapData[team].length + 1}`);
+      if (label) {
+        lapData[team].push({ label, time: formatTime(currentTime) });
+        const li = document.createElement('li');
+        li.textContent = `${lapData[team].length}. ${label} - ${formatTime(currentTime)}`;
+        document.getElementById(`laps${team}`).appendChild(li);
+      }
+    }
+
+    function exportCSV() {
+      let csv = 'Team,Lap Number,Label,Time\n';
+      ['A', 'B'].forEach(team => {
+        lapData[team].forEach((lap, i) => {
+          csv += `Team ${team},${i + 1},${lap.label},${lap.time}\n`;
+        });
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'hyrox_lap_times.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  </script>
+</body>
+</html>
